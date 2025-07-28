@@ -11,6 +11,8 @@ import {
   SafeAreaView 
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { router } from 'expo-router';
+
 
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
@@ -99,11 +101,20 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             style={styles.recentlyPlayedContainer}
           >
-            {recentlyPlayed.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.recentlyPlayedItem}>
-                <Image source={item.cover} style={styles.albumCover} />
-              </TouchableOpacity>
-            ))}
+          {recentlyPlayed.map((item, index) => (
+            <TouchableOpacity 
+              key={item.id} 
+              style={styles.recentlyPlayedItem}
+              onPress={() => {
+                // Make the first album (SWAG) clickable to go to player
+                if (index === 0) {
+                  router.push('/(app)/player');
+                }
+              }}
+            >
+              <Image source={item.cover} style={styles.albumCover} />
+            </TouchableOpacity>
+          ))}
           </ScrollView>
         </View>
 

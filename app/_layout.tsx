@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { SpotifyProvider } from '../context/SpotifyContext';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
 // Splash Screen Component
@@ -91,7 +92,9 @@ const InitialLayout = () => {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <InitialLayout />
+      <SpotifyProvider>
+        <InitialLayout />
+      </SpotifyProvider>
     </AuthProvider>
   );
 }
@@ -111,7 +114,7 @@ const styles = StyleSheet.create({
   },
   waveform: {
     flexDirection: 'row',
-    //alignItems: 'end',
+    alignItems: 'flex-end',
     gap: 4,
   },
   wave: {

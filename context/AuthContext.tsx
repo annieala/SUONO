@@ -6,8 +6,8 @@ import { supabase } from '../lib/supabase';
 
 // Define the shape of the context value
 interface AuthContextType {
-  signUp: (email, password, firstName, lastName) => Promise<{ error: string | null }>;
-  signIn: (email, password) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   user: User | null;
   session: Session | null;
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ✅ FIXED: This function no longer changes the global loading state
-  const signUp = async (email, password, firstName, lastName) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // ✅ FIXED: This function no longer changes the global loading state
-  const signIn = async (email, password) => {
+  const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
