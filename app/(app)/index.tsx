@@ -13,17 +13,14 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { router } from 'expo-router';
 
-
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
   
-  // Get the user's first name for greeting - try multiple sources
   const firstName = user?.user_metadata?.first_name || 
                    user?.user_metadata?.firstName || 
                    user?.email?.split('@')[0] || 
                    'Friend';
   
-  // Get current time for greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -40,7 +37,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Mock data for friends with local assets
   const friends = [
     { id: 1, name: 'Sarah', avatar: require('../../assets/beyonce.jpg')},
     { id: 2, name: 'Mike', avatar: require('../../assets/frank-ocean.jpg') },
@@ -48,14 +44,12 @@ export default function HomeScreen() {
     { id: 4, name: 'Alex', avatar: require('../../assets/childish-gambino.jpg') },
   ];
 
-  // Mock data for recently played with local assets
   const recentlyPlayed = [
     { id: 1, title: 'Album 1', cover: require('../../assets/swag.jpg') },
     { id: 2, title: 'Album 2', cover: require('../../assets/dijon.jpg') },
     { id: 3, title: 'Album 3', cover: require('../../assets/ab67616d0000b273eeb464ea9a23de21dd7aa4c9.jpg') },
   ];
 
-  // Mock data for playlists with local assets
   const playlists = [
     { id: 1, name: '⭐ Favorites ⭐', cover: require('../../assets/fool.jpg') },
     { id: 2, name: '☁️ ☁️ Monday Mood ☁️ ☁️', cover: require('../../assets/lovetide.jpg') },
@@ -71,11 +65,19 @@ export default function HomeScreen() {
             {getGreeting()} {firstName} ✨
           </Text>
           
-          {/* Logout button (you can move this to a settings screen later) */}
+          {/* Logout button */}
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
+
+        {/* NEW: Add Favorite Manually button */}
+        <TouchableOpacity
+          onPress={() => router.push('/(app)/add-favorite')}
+          style={styles.addFavoriteButton}
+        >
+          <Text style={styles.addFavoriteButtonText}>Add Favorite Manually</Text>
+        </TouchableOpacity>
 
         {/* Friends listening section */}
         <View style={styles.section}>
@@ -106,7 +108,6 @@ export default function HomeScreen() {
               key={item.id} 
               style={styles.recentlyPlayedItem}
               onPress={() => {
-                // Make the first album (SWAG) clickable to go to player
                 if (index === 0) {
                   router.push('/(app)/player');
                 }
@@ -130,6 +131,17 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
+
+        {/* Existing "Go to Favorites" button */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            onPress={() => router.push('/(app)/favorites')}
+            style={styles.favoritesButton}
+          >
+            <Text style={styles.favoritesButtonText}>Go to Favorites</Text>
+          </TouchableOpacity>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -138,7 +150,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e', // Dark blue background like in the design
+    backgroundColor: '#1a1a2e',
   },
   scrollView: {
     flex: 1,
@@ -157,7 +169,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   logoutButton: {
-    backgroundColor: '#410e40ff', // Purple color
+    backgroundColor: '#410e40ff',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
@@ -166,6 +178,17 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  addFavoriteButton: {
+    backgroundColor: '#7c3aed',
+    padding: 12,
+    borderRadius: 10,
+    marginVertical: 20,
+    alignSelf: 'center',
+  },
+  addFavoriteButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
   section: {
     marginBottom: 35,
@@ -186,7 +209,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    borderWidth: .5,
+    borderWidth: 0.5,
     borderColor: '#ffffff',
   },
   recentlyPlayedContainer: {
@@ -206,7 +229,7 @@ const styles = StyleSheet.create({
   playlistItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16213e', // Slightly lighter than background
+    backgroundColor: '#16213e',
     borderRadius: 12,
     padding: 12,
   },
@@ -221,5 +244,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     flex: 1,
+  },
+  favoritesButton: {
+    backgroundColor: '#7c3aed',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  favoritesButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
