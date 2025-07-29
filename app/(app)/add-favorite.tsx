@@ -1,7 +1,8 @@
+// File: app/(app)/favorites/add-favorite.tsx
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, Alert, StyleSheet } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase'; // use your existing client
+import { supabase } from '../../lib/supabase';
 
 export default function AddFavoriteScreen() {
   const { session } = useAuth();
@@ -16,25 +17,40 @@ export default function AddFavoriteScreen() {
       return;
     }
 
-    const { error } = await supabase.from('favorites').insert([
-      {
-        user_id: session?.user.id,
-        track_id: trackId,
-        track_metadata: {
-          title: trackTitle,
-          artist: artist,
-        },
-      },
-    ]);
+    if (!session?.user?.id) {
+      setError('User not authenticated');
+      return;
+    }
 
-    if (error) {
-      setError(error.message);
-    } else {
+    try {
+      const { error } = await supabase.from('favorites').upsert(
+        [
+          {
+            user_id: session.user.id,
+            track_id: trackId,
+            // Make sure track_metadata is stringified if it's JSONB or text
+            track_metadata: JSON.stringify({
+              title: trackTitle,
+              artist: artist,
+            }),
+          },
+        ],
+        { onConflict: ['user_id', 'track_id'] }
+      );
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
       setError('');
       Alert.alert('Success', 'Favorite song added!');
       setTrackId('');
       setTrackTitle('');
       setArtist('');
+    } catch (e) {
+      setError('Unexpected error occurred');
+      console.error(e);
     }
   };
 
