@@ -185,7 +185,7 @@ export default function SignUpScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16213e', // Same dark blue background as login
+    backgroundColor: '#0A0E26', // Same dark blue background as login
   },
   keyboardView: {
     flex: 1,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: '600',
-    color: '#ffffff',
+    color: '#F9E1CF',
     letterSpacing: 1,
     marginBottom: 8,
   },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    color: '#ffffff',
+    color: '#F9E1CF',
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#ffffff',
+    color: '#F9E1CF',
   },
   errorContainer: {
     marginBottom: 20,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   signUpButton: {
-    backgroundColor: '#7c3aed', // Purple button
+    backgroundColor: '#7416F9', // Purple button
     borderRadius: 25,
     paddingVertical: 16,
     alignItems: 'center',
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   signUpButtonText: {
-    color: '#ffffff',
+    color: '#F9E1CF',
     fontSize: 18,
     fontWeight: '600',
   },
