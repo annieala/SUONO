@@ -15,6 +15,9 @@ import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFavorites } from '../../context/FavoritesContext';
+import { Animated } from 'react-native';
+
+
 
 const { width } = Dimensions.get('window');
 
@@ -57,8 +60,8 @@ export default function MusicPlayerScreen() {
 
   // Playlist data for the dropdown (excluding Favorites)
   const availablePlaylists = [
-    { id: 2, name: '☁️ ☁️ Monday Mood ☁️ ☁️', cover: require('../../assets/lovetide.jpg') },
-    { id: 3, name: '🏋️ Gym 🏋️', cover: require('../../assets/640x640.jpg') },
+    { id: 2, name: 'Monday Mood ⋆｡˚☽˚｡⋆', cover: require('../../assets/lovetide.jpg') },
+    { id: 3, name: 'Gym ❚█══█❚', cover: require('../../assets/640x640.jpg') },
   ];
 
   // PLAYLIST WITH ALL TRACKS
@@ -362,14 +365,15 @@ export default function MusicPlayerScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.leftButton}>
-          <Ionicons name="chevron-down" size={24} color="#F9E1CF" />  
+          <Ionicons name="chevron-down" size={15} color="#F9E1CF" />  
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>PLAYING FROM PLAYLIST</Text>
-          <Text style={styles.headerSubtitle}> Daisies</Text>
+        <Text style={styles.headerSubtitle}>{playlist[currentTrackIndex]?.title}</Text>
+
         </View>
         <TouchableOpacity onPress={toggleDropdown} style={styles.rightButton}>
-          <Ionicons name="ellipsis-vertical" size={24} color="#F9E1CF" />
+          <Ionicons name="ellipsis-vertical" size={15} color="#F9E1CF" />
         </TouchableOpacity>
       </View>
 
@@ -687,8 +691,9 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     backgroundColor: '#16213e',
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: 2,
+    padding: 6,
+    marginTop: 10,
     minWidth: 200,
     shadowColor: '#000',
     shadowOffset: {
@@ -709,9 +714,9 @@ const styles = StyleSheet.create({
   dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 1,
+    borderRadius: 1,
   },
   dropdownItemCover: {
     width: 30,
