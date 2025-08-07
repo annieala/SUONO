@@ -8,11 +8,12 @@ import {
   Dimensions,
   Image,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useFavorites } from '../../context/FavoritesContext';
 
 const { width } = Dimensions.get('window');
@@ -28,22 +29,37 @@ interface Track {
 type RepeatMode = 'off' | 'all' | 'one';
 
 export default function MusicPlayerScreen() {
+  // Get route parameters
+  const { trackIndex: paramTrackIndex } = useLocalSearchParams();
+  
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
+    // Initialize with route parameter or default to 0
+    return paramTrackIndex ? parseInt(paramTrackIndex as string, 10) : 0;
+  });
   
   // New state for shuffle and repeat
   const [isShuffleEnabled, setIsShuffleEnabled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
   const [shuffleHistory, setShuffleHistory] = useState<number[]>([]);
   const [originalPlaylist, setOriginalPlaylist] = useState<Track[]>([]);
+  
+  // State for dropdown menu
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Use favorites context
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  // Playlist data for the dropdown (excluding Favorites)
+  const availablePlaylists = [
+    { id: 2, name: '☁️ ☁️ Monday Mood ☁️ ☁️', cover: require('../../assets/lovetide.jpg') },
+    { id: 3, name: '🏋️ Gym 🏋️', cover: require('../../assets/640x640.jpg') },
+  ];
 
   // PLAYLIST WITH ALL TRACKS
   const playlist: Track[] = [
@@ -78,6 +94,13 @@ export default function MusicPlayerScreen() {
       setOriginalPlaylist([...playlist]);
     }
   }, []);
+
+  // Auto-load track when component mounts or trackIndex changes
+  useEffect(() => {
+    if (currentTrackIndex >= 0 && currentTrackIndex < playlist.length) {
+      loadAndPlayAudio(currentTrackIndex);
+    }
+  }, []); // Only run on mount
 
   // Safety check
   if (!currentTrack) {
@@ -208,20 +231,6 @@ export default function MusicPlayerScreen() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const skipBackward = async () => {
-    if (sound) {
-      const newPosition = Math.max(0, position - 15000);
-      await seekToPosition(newPosition);
-    }
-  };
-
-  const skipForward = async () => {
-    if (sound) {
-      const newPosition = Math.min(duration, position + 15000);
-      await seekToPosition(newPosition);
-    }
-  };
-
   // Get random track index (excluding current track)
   const getRandomTrackIndex = (): number => {
     if (playlist.length <= 1) return 0;
@@ -305,7 +314,7 @@ export default function MusicPlayerScreen() {
   const getRepeatIcon = () => {
     switch (repeatMode) {
       case 'one':
-        return 'repeat-outline'; // Could also use a "1" overlay
+        return 'repeat-outline';
       case 'all':
         return 'repeat';
       default:
@@ -314,7 +323,7 @@ export default function MusicPlayerScreen() {
   };
 
   const getRepeatColor = () => {
-    return repeatMode !== 'off' ? '#1DB954' : '#fff';
+    return repeatMode !== 'off' ? '#1DB954' : '#F9E1CF';
   };
 
   const handleBack = () => {
@@ -325,21 +334,42 @@ export default function MusicPlayerScreen() {
     toggleFavorite(currentTrack);
   };
 
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleAddToPlaylist = (playlistId: number, playlistName: string) => {
+    // Here you would implement the actual logic to add the track to the playlist
+    // For now, we'll just show an alert as a demo
+    console.log(`Adding "${currentTrack.title}" to "${playlistName}"`);
+    
+    // Close the dropdown
+    setShowDropdown(false);
+    
+    // Show confirmation (you could replace this with a toast notification)
+    setTimeout(() => {
+      Alert.alert(
+        "Added to Playlist", 
+        `"${currentTrack.title}" has been added to "${playlistName}"`
+      );
+    }, 100);
+  };
+
   const isCurrentTrackFavorite = isFavorite(currentTrack.id);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack}>
-          <Ionicons name="chevron-down" size={24} color="#fff" />
+        <TouchableOpacity onPress={handleBack} style={styles.leftButton}>
+          <Ionicons name="chevron-down" size={24} color="#F9E1CF" />  
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>PLAYING FROM PLAYLIST</Text>
-          <Text style={styles.headerSubtitle}>Track {currentTrackIndex + 1} of {playlist.length}</Text>
+          <Text style={styles.headerSubtitle}> Daisies</Text>
         </View>
-        <TouchableOpacity>
-          <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
+        <TouchableOpacity onPress={toggleDropdown} style={styles.rightButton}>
+          <Ionicons name="ellipsis-vertical" size={24} color="#F9E1CF" />
         </TouchableOpacity>
       </View>
 
@@ -360,7 +390,7 @@ export default function MusicPlayerScreen() {
           <Ionicons 
             name={isCurrentTrackFavorite ? "heart" : "heart-outline"} 
             size={24} 
-            color={isCurrentTrackFavorite ? "#ff6b6b" : "#fff"} 
+            color={isCurrentTrackFavorite ? "#F9E1CF" : "#F9E1CF"} 
           />
         </TouchableOpacity>
       </View>
@@ -380,9 +410,9 @@ export default function MusicPlayerScreen() {
             seekToPosition(value);
             setIsSliding(false);
           }}
-          minimumTrackTintColor="#1DB954"
+          minimumTrackTintColor="#F9E1CF"
           maximumTrackTintColor="#333"
-          thumbTintColor="#1DB954"
+          thumbTintColor="#F9E1CF"
         />
         <View style={styles.timeContainer}>
           <Text style={styles.timeText}>{formatTime(position)}</Text>
@@ -392,12 +422,16 @@ export default function MusicPlayerScreen() {
 
       {/* Controls */}
       <View style={styles.controlsContainer}>
-        <TouchableOpacity onPress={skipBackward}>
-          <Ionicons name="play-back" size={30} color="#fff" />
+        <TouchableOpacity onPress={toggleShuffle}>
+          <Ionicons 
+            name="shuffle" 
+            size={24} 
+            color={isShuffleEnabled ? '#1DB954' : '#F9E1CF'} 
+          />
         </TouchableOpacity>
-        
+
         <TouchableOpacity onPress={previousTrack}>
-          <Ionicons name="play-skip-back" size={30} color="#fff" />
+          <Ionicons name="play-skip-back" size={30} color="#F9E1CF" />
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -406,35 +440,20 @@ export default function MusicPlayerScreen() {
           disabled={isLoading}
         >
           {isLoading ? (
-            <Ionicons name="hourglass" size={30} color="#000" />
+            <Ionicons name="hourglass" size={25} color="#F9E1CF" />
           ) : (
             <Ionicons 
               name={isPlaying ? "pause" : "play"} 
-              size={30} 
+              size={20} 
               color="#000" 
             />
           )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={nextTrack}>
-          <Ionicons name="play-skip-forward" size={30} color="#fff" />
+          <Ionicons name="play-skip-forward" size={30} color="#F9E1CF" />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={skipForward}>
-          <Ionicons name="play-forward" size={30} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Bottom Controls */}
-      <View style={styles.bottomControls}>
-        <TouchableOpacity onPress={toggleShuffle}>
-          <Ionicons 
-            name="shuffle" 
-            size={24} 
-            color={isShuffleEnabled ? '#1DB954' : '#fff'} 
-          />
-        </TouchableOpacity>
-        
         <TouchableOpacity onPress={toggleRepeat}>
           <View style={styles.repeatContainer}>
             <Ionicons 
@@ -455,9 +474,40 @@ export default function MusicPlayerScreen() {
       <View style={styles.lyricsSection}>
         <TouchableOpacity style={styles.lyricsButton}>
           <Text style={styles.lyricsText}>LYRICS</Text>
-          <Ionicons name="chevron-up" size={16} color="#fff" />
         </TouchableOpacity>
+           <TouchableOpacity style={styles.lyricsButton}>
+          <Ionicons name="chevron-down"  size={16} color="#F9E1CF" />
+          </TouchableOpacity>
+                
+
       </View>
+ 
+      {/* Dropdown Menu */}
+      {showDropdown && (
+        <>
+          {/* Backdrop to close dropdown */}
+          <TouchableOpacity 
+            style={styles.dropdownBackdrop}
+            onPress={() => setShowDropdown(false)}
+            activeOpacity={1}
+          />
+          <View style={styles.dropdownContainer}>
+            <View style={styles.dropdownMenu}>
+              <Text style={styles.dropdownTitle}>+  Add to Playlist</Text>
+              {availablePlaylists.map((playlist) => (
+                <TouchableOpacity 
+                  key={playlist.id}
+                  style={styles.dropdownItem}
+                  onPress={() => handleAddToPlaylist(playlist.id, playlist.name)}
+                >
+                  <Image source={playlist.cover} style={styles.dropdownItemCover} />
+                  <Text style={styles.dropdownItemText}>{playlist.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -465,7 +515,7 @@ export default function MusicPlayerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0A0E26',
     paddingHorizontal: 20,
     paddingTop: 10,
   },
@@ -475,7 +525,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#fff',
+    color: '#F9E1CF',
     fontSize: 18,
     fontWeight: '500',
   },
@@ -486,62 +536,80 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     marginTop: 10,
   },
+  leftButton: {
+    position: 'absolute',
+    left: 30,
+    zIndex: 1,
+  },
+  rightButton: {
+    position: 'absolute',
+    right: 30,
+    zIndex: 1,
+  },
   headerInfo: {
     flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
     color: '#fff',
+    opacity: .5,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '400',
     letterSpacing: 1,
   },
   headerSubtitle: {
     color: '#aaa',
-    fontSize: 10,
-    marginTop: 2,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 5,
+    marginBottom: 15,
   },
   artworkContainer: {
     alignItems: 'center',
     marginBottom: 40,
   },
   artwork: {
-    width: width - 80,
-    height: width - 80,
+    width: width - 50,
+    height: width - 50,
     borderRadius: 8,
     backgroundColor: '#000',
   },
   trackInfo: {
-    alignItems: 'center',
-    marginBottom: 40,
+    alignItems: 'flex-start',
+    left: 30,
+    marginBottom: 20,
     position: 'relative',
   },
   trackTitle: {
-    color: '#fff',
-    fontSize: 24,
+    color: '#F9E1CF',
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 15,
   },
   trackArtist: {
-    color: '#aaa',
-    fontSize: 16,
+    color: '#fff',
+    opacity: 0.5,
+    fontSize: 14,
+    fontWeight:'bold',
   },
   heartIcon: {
     position: 'absolute',
-    right: 0,
+    right: 60,
     top: 0,
   },
   progressContainer: {
-    marginBottom: 40,
+    marginBottom: 20,
+    alignItems: 'center',
   },
   progressBar: {
-    width: '100%',
+    width: '90%',
     height: 40,
   },
   timeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: -10,
+    width: '90%', // Match the progress bar width
   },
   timeText: {
     color: '#aaa',
@@ -555,19 +623,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   playButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F9E1CF',
     borderRadius: 35,
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  bottomControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 60,
   },
   repeatContainer: {
     position: 'relative',
@@ -584,24 +645,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   repeatOneText: {
-    color: '#fff',
+    color: '#F9E1CF',
     fontSize: 10,
     fontWeight: 'bold',
   },
   lyricsSection: {
+    paddingTop: 20,
     alignItems: 'center',
-    paddingBottom: 20,
+    justifyContent: 'center',
+    paddingBottom: 15,
   },
   lyricsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: 5,
+
   },
   lyricsText: {
     fontSize: 13,
-    color: '#fff',
-    fontWeight: '600',
-    marginRight: 4,
-    letterSpacing: 1,
+    color: '#Ffffff',
+    opacity: 0.5,
+    fontWeight: '300',
+   
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    alignItems: 'flex-start',
+    top: 80,
+    right: 0, // Position dropdown near the right button
+    zIndex: 1000,
+    
+  },
+  dropdownBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 999,
+  },
+  dropdownMenu: {
+    backgroundColor: '#16213e',
+    borderRadius: 12,
+    padding: 15,
+    minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  dropdownTitle: {
+    color: '#F9E1CF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderRadius: 8,
+  },
+  dropdownItemCover: {
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  dropdownItemText: {
+    color: '#F9E1CF',
+    fontSize: 14,
+    flex: 1,
   },
 });

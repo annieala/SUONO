@@ -1,4 +1,4 @@
-// File: app/(app)/index.tsx - Merged Version
+// File: app/(app)/index.tsx
 import React, { useState, useMemo } from 'react';
 import { 
   View, 
@@ -56,6 +56,7 @@ export default function HomeScreen() {
     title: string;
     artist: string;
     cover: any;
+    trackIndex?: number; // Add track index to map to player playlist
   }
 
   interface SearchableItem {
@@ -64,6 +65,7 @@ export default function HomeScreen() {
     artist?: string; // Optional for playlists
     cover: any;
     type: 'Playlist' | 'Album';
+    trackIndex?: number; // Add track index for direct player navigation
   }
 
   // Mock data for friends with local assets
@@ -74,21 +76,21 @@ export default function HomeScreen() {
     { id: 4, name: 'Alex', avatar: require('../../assets/childish-gambino.jpg') },
   ];
 
-  // Enhanced recently played with artist information (from teammate)
+  // Enhanced recently played with artist information and track mapping
   const recentlyPlayed: RecentlyPlayedItem[] = [
-    { id: 1, title: 'Daisies', artist: 'Justin Bieber', cover: require('../../assets/swag.jpg') },
-    { id: 2, title: 'The Dress', artist: 'Dijon', cover: require('../../assets/dijon.jpg') },
-    { id: 3, title: 'Mutt', artist: 'Leon Thomas', cover: require('../../assets/mutt.jpg') },
+    { id: 1, title: 'Daisies', artist: 'Justin Bieber', cover: require('../../assets/swag.jpg'), trackIndex: 0 },
+    { id: 2, title: 'The Dress', artist: 'Dijon', cover: require('../../assets/dijon.jpg'), trackIndex: 1 },
+    { id: 3, title: 'Mutt', artist: 'Leon Thomas', cover: require('../../assets/mutt.jpg'), trackIndex: 2 },
   ];
 
   // Mock data for playlists with local assets
   const playlists: PlaylistItem[] = [
-    { id: 1, name: '⭐ Favorites ⭐', cover: require('../../assets/fool.jpg') },
-    { id: 2, name: '☁️ ☁️ Monday Mood ☁️ ☁️', cover: require('../../assets/lovetide.jpg') },
-    { id: 3, name: '🏋️ Gym 🏋️', cover: require('../../assets/640x640.jpg') },
+    { id: 1, name: '☆ Favourites ☆', cover: require('../../assets/fool.jpg') },
+    { id: 2, name: '⋆｡˚ ☁︎ ˚｡ Monday Mood ⋆｡˚☽˚｡⋆ ', cover: require('../../assets/lovetide.jpg') },
+    { id: 3, name: '❚█══█❚ Gym ❚█══█❚', cover: require('../../assets/640x640.jpg') },
   ];
 
-  // Search functionality (from teammate) with proper typing
+  // Search functionality with proper typing and track mapping
   const allSearchableItems = useMemo((): SearchableItem[] => {
     const mappedPlaylists: SearchableItem[] = playlists.map(p => ({ 
       id: p.id,
@@ -101,7 +103,8 @@ export default function HomeScreen() {
       title: r.title,
       artist: r.artist,
       cover: r.cover,
-      type: 'Album' as const
+      type: 'Album' as const,
+      trackIndex: r.trackIndex // Include track index for navigation
     }));
     return [...mappedPlaylists, ...mappedRecentlyPlayed];
   }, []);
@@ -120,8 +123,27 @@ export default function HomeScreen() {
     if (item.type === 'Playlist' && item.id === 1) {
       // Navigate to favorites
       router.push('/(app)/favorites');
-    } else if (item.type === 'Album') {
-      // Navigate to player
+    } else if (item.type === 'Album' && item.trackIndex !== undefined) {
+      // Navigate to player with specific track index
+      router.push({
+        pathname: '/(app)/player',
+        params: { trackIndex: item.trackIndex.toString() }
+      });
+    } else {
+      // Default player navigation
+      router.push('/(app)/player');
+    }
+  };
+
+  const handleRecentlyPlayedPress = (item: RecentlyPlayedItem) => {
+    if (item.trackIndex !== undefined) {
+      // Navigate to player with specific track
+      router.push({
+        pathname: '/(app)/player',
+        params: { trackIndex: item.trackIndex.toString() }
+      });
+    } else {
+      // Default navigation
       router.push('/(app)/player');
     }
   };
@@ -219,10 +241,7 @@ export default function HomeScreen() {
                   <TouchableOpacity 
                     key={item.id} 
                     style={styles.recentlyPlayedItem}
-                    onPress={() => {
-                      // All recently played items are clickable
-                      router.push('/(app)/player');
-                    }}
+                    onPress={() => handleRecentlyPlayedPress(item)}
                   >
                     <Image source={item.cover} style={styles.albumCover} />
                     <Text style={styles.itemTitle} numberOfLines={1}>{item.title}</Text>
@@ -264,7 +283,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0A0E26',
   },
   scrollView: {
     flex: 1,
@@ -278,19 +297,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   greeting: {
-    fontSize: 25,
-    fontWeight: '500',
-    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '400',
+    color: '#F9E1CF',
   },
   logoutButton: {
-    backgroundColor: '#5f045cff',
+    backgroundColor: '#0A0E26',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
   },
   logoutText: {
-    color: '#ffffff',
-    fontSize: 14,
+    color: '#F9E1CF',
+    fontSize: 10,
     fontWeight: '600',
   },
   searchSection: {
@@ -303,6 +322,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 4,
+    marginBottom: -10,
+    height: 30,
   },
   searchIcon: {
     marginRight: 10,
@@ -321,7 +342,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   noResultsText: {
-    color: '#fff',
+    color: '#F9E1CF',
     textAlign: 'center',
     marginTop: 16,
     fontSize: 18,
@@ -342,29 +363,32 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    marginBottom: 35,
+    marginBottom: 40,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#ffffff',
-    marginBottom: 15,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#F9E1CF',
+    marginBottom: 25,
   },
   friendsContainer: {
     flexDirection: 'row',
+    marginBottom: 2,
   },
   friendItem: {
     marginRight: 15,
+    padding: 8,
   },
   friendAvatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
     borderWidth: .5,
-    borderColor: '#ffffff',
+    borderColor: '#F9E1CF',
   },
   recentlyPlayedContainer: {
     flexDirection: 'row',
+    marginBottom: 10,
   },
   recentlyPlayedItem: {
     marginRight: 15,
@@ -377,7 +401,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   itemTitle: {
-    color: '#ffffff',
+    color: '#F9E1CF',
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -391,7 +415,7 @@ const styles = StyleSheet.create({
   playlistItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16213e',
+    backgroundColor: '#0A0E26',
     borderRadius: 12,
     padding: 12,
   },
@@ -402,9 +426,9 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   playlistName: {
-    color: '#ffffff',
+    color: '#F9E1CF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '400',
     flex: 1,
   },
 });

@@ -56,7 +56,7 @@ export default function FavoritesScreen() {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-down" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>⭐ Favourites ⭐</Text>
+        <Text style={styles.headerTitle}>☆ Favourites ☆</Text>
         <TouchableOpacity style={styles.optionsButton}>
           <Ionicons name="ellipsis-horizontal" size={24} color="#fff" />
         </TouchableOpacity>
@@ -72,7 +72,7 @@ export default function FavoritesScreen() {
           <View style={styles.heroOverlay} />
         </View>
         <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>⭐ Favourites ⭐</Text>
+          <Text style={styles.heroTitle}>☆ Favourites ☆</Text>
           <Text style={styles.heroSubtitle}>Songs you've liked...</Text>
         </View>
       </View>
