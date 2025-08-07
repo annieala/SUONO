@@ -13,6 +13,7 @@ import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useFavorites } from '../../context/FavoritesContext';
 
 const { width } = Dimensions.get('window');
 
@@ -20,7 +21,7 @@ interface Track {
   id: string;
   title: string;
   artist: string;
-  uri: any; // Can be require() or { uri: string } for assets
+  uri: any;
   artwork?: any;
 }
 
@@ -33,7 +34,10 @@ export default function MusicPlayerScreen() {
   const [isSliding, setIsSliding] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
 
-  // PLAYLIST WITH BOTH TRACKS
+  // Use favorites context
+  const { isFavorite, toggleFavorite } = useFavorites();
+
+ // PLAYLIST WITH BOTH TRACKS
   const playlist: Track[] = [
     {
       id: '1',
@@ -112,12 +116,10 @@ export default function MusicPlayerScreen() {
     try {
       setIsLoading(true);
       
-      // Unload previous sound if exists
       if (sound) {
         await sound.unloadAsync();
       }
 
-      // Determine which track to load
       const targetIndex = trackIndex !== undefined ? trackIndex : currentTrackIndex;
       const track = playlist[targetIndex];
 
@@ -127,7 +129,6 @@ export default function MusicPlayerScreen() {
         return;
       }
 
-      // Set audio mode for playback
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
@@ -136,24 +137,19 @@ export default function MusicPlayerScreen() {
         playThroughEarpieceAndroid: false,
       });
 
-      // Load the audio file
       const { sound: newSound } = await Audio.Sound.createAsync(
         track.uri,
         { shouldPlay: false }
       );
 
       setSound(newSound);
-      
-      // Reset position for new track
       setPosition(0);
       
-      // Get initial status
       const status = await newSound.getStatusAsync();
       if (status.isLoaded) {
         setDuration(status.durationMillis || 0);
       }
 
-      // Start playing
       await newSound.playAsync();
       setIsPlaying(true);
       setIsLoading(false);
@@ -161,18 +157,6 @@ export default function MusicPlayerScreen() {
       console.error('Error loading audio:', error);
       setIsLoading(false);
     }
-  };
-
-  const nextTrack = async () => {
-    const nextIndex = (currentTrackIndex + 1) % playlist.length;
-    setCurrentTrackIndex(nextIndex);
-    await loadAndPlayAudio(nextIndex);
-  };
-
-  const previousTrack = async () => {
-    const prevIndex = currentTrackIndex === 0 ? playlist.length - 1 : currentTrackIndex - 1;
-    setCurrentTrackIndex(prevIndex);
-    await loadAndPlayAudio(prevIndex);
   };
 
   const togglePlayPause = async () => {
@@ -226,9 +210,27 @@ export default function MusicPlayerScreen() {
     }
   };
 
+  const nextTrack = async () => {
+    const nextIndex = (currentTrackIndex + 1) % playlist.length;
+    setCurrentTrackIndex(nextIndex);
+    await loadAndPlayAudio(nextIndex);
+  };
+
+  const previousTrack = async () => {
+    const prevIndex = currentTrackIndex === 0 ? playlist.length - 1 : currentTrackIndex - 1;
+    setCurrentTrackIndex(prevIndex);
+    await loadAndPlayAudio(prevIndex);
+  };
+
   const handleBack = () => {
     router.back();
   };
+
+  const handleToggleFavorite = () => {
+    toggleFavorite(currentTrack);
+  };
+
+  const isCurrentTrackFavorite = isFavorite(currentTrack.id);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -259,8 +261,12 @@ export default function MusicPlayerScreen() {
       <View style={styles.trackInfo}>
         <Text style={styles.trackTitle}>{currentTrack.title}</Text>
         <Text style={styles.trackArtist}>{currentTrack.artist}</Text>
-        <TouchableOpacity style={styles.heartIcon}>
-          <Ionicons name="heart-outline" size={24} color="#fff" />
+        <TouchableOpacity style={styles.heartIcon} onPress={handleToggleFavorite}>
+          <Ionicons 
+            name={isCurrentTrackFavorite ? "heart" : "heart-outline"} 
+            size={24} 
+            color={isCurrentTrackFavorite ? "#ff6b6b" : "#fff"} 
+          />
         </TouchableOpacity>
       </View>
 
@@ -454,7 +460,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
   },
   lyricsSection: {
-    alignItems: 'center', 
+    alignItems: 'center',
     paddingBottom: 20,
   },
   lyricsButton: {

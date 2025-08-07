@@ -123,7 +123,17 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Your Playlists ♡</Text>
           <View style={styles.playlistsContainer}>
             {playlists.map((playlist) => (
-              <TouchableOpacity key={playlist.id} style={styles.playlistItem}>
+              <TouchableOpacity 
+                key={playlist.id} 
+                style={styles.playlistItem}
+                onPress={() => {
+                  // Navigate to favorites if it's the favorites playlist
+                  if (playlist.id === 1) { // Favorites playlist
+                    router.push('/(app)/favorites');
+                  }
+                  // Add other playlist navigation here later
+                }}
+              >
                 <Image source={playlist.cover} style={styles.playlistCover} />
                 <Text style={styles.playlistName}>{playlist.name}</Text>
               </TouchableOpacity>
@@ -157,7 +167,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   logoutButton: {
-    backgroundColor: '#410e40ff', // Purple color
+    backgroundColor: '#5f045cff', // Purple color
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,

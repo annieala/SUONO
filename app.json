@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Suono",
+    "name": "SUONO",
     "slug": "Assignment2",
     "version": "1.0.0",
     "scheme": "my-cool-app",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/suono-loading-image.jpg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "plugins": [["expo-router"
