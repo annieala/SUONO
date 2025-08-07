@@ -1,12 +1,12 @@
 {
   "expo": {
     "name": "SUONO",
-    "slug": "Assignment2",
+    "slug": "SUONO",
     "version": "1.0.0",
     "scheme": "my-cool-app",
     "orientation": "portrait",
     "icon": "./assets/suono-loading-image.jpg",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "plugins": [["expo-router"
       ]
@@ -16,7 +16,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true

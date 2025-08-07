@@ -25,6 +25,8 @@ interface Track {
   artwork?: any;
 }
 
+type RepeatMode = 'off' | 'all' | 'one';
+
 export default function MusicPlayerScreen() {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,25 +35,29 @@ export default function MusicPlayerScreen() {
   const [duration, setDuration] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  
+  // New state for shuffle and repeat
+  const [isShuffleEnabled, setIsShuffleEnabled] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
+  const [shuffleHistory, setShuffleHistory] = useState<number[]>([]);
+  const [originalPlaylist, setOriginalPlaylist] = useState<Track[]>([]);
 
   // Use favorites context
   const { isFavorite, toggleFavorite } = useFavorites();
 
- // PLAYLIST WITH BOTH TRACKS
+  // PLAYLIST WITH ALL TRACKS
   const playlist: Track[] = [
     {
       id: '1',
       title: 'Daisies',
       artist: 'Justin Bieber',
-      uri: require('../../assets/audio/sample.mp3'), // Add your MP3 file here
-      artwork: require('../../assets/swag.jpg'), // Using your SWAG artwork
-
+      uri: require('../../assets/audio/sample.mp3'), 
+      artwork: require('../../assets/swag.jpg'), 
     },
     {
       id: '2',
       title: 'The Dress',
       artist: 'Dijon',
-      // For now using another web URL - you can replace with local file later
       uri: require('../../assets/audio/the-dress.mp3'),
       artwork: require('../../assets/dijon.jpg'),
     },
@@ -59,13 +65,19 @@ export default function MusicPlayerScreen() {
       id: '3',
       title: 'Mutt',
       artist: 'Leon Thomas',
-      // For now using another web URL - you can replace with local file later
       uri: require('../../assets/audio/mutt.mp3'),
       artwork: require('../../assets/mutt.jpg'),
     },
   ];
 
   const currentTrack = playlist[currentTrackIndex];
+
+  // Initialize original playlist
+  useEffect(() => {
+    if (originalPlaylist.length === 0) {
+      setOriginalPlaylist([...playlist]);
+    }
+  }, []);
 
   // Safety check
   if (!currentTrack) {
@@ -99,7 +111,7 @@ export default function MusicPlayerScreen() {
           // Auto-play next track when current track ends
           if (status.positionMillis && status.durationMillis && 
               status.positionMillis >= status.durationMillis - 1000) {
-            await nextTrack();
+            await handleTrackEnd();
           }
         }
       }, 1000);
@@ -110,7 +122,7 @@ export default function MusicPlayerScreen() {
         clearInterval(interval);
       }
     };
-  }, [sound, isPlaying, isSliding, currentTrackIndex]);
+  }, [sound, isPlaying, isSliding, currentTrackIndex, repeatMode]);
 
   const loadAndPlayAudio = async (trackIndex?: number) => {
     try {
@@ -210,16 +222,99 @@ export default function MusicPlayerScreen() {
     }
   };
 
+  // Get random track index (excluding current track)
+  const getRandomTrackIndex = (): number => {
+    if (playlist.length <= 1) return 0;
+    
+    let randomIndex;
+    do {
+      randomIndex = Math.floor(Math.random() * playlist.length);
+    } while (randomIndex === currentTrackIndex);
+    
+    return randomIndex;
+  };
+
+  // Handle what happens when a track ends
+  const handleTrackEnd = async () => {
+    if (repeatMode === 'one') {
+      // Repeat current track
+      await loadAndPlayAudio(currentTrackIndex);
+    } else if (repeatMode === 'all' || repeatMode === 'off') {
+      await nextTrack();
+    }
+  };
+
   const nextTrack = async () => {
-    const nextIndex = (currentTrackIndex + 1) % playlist.length;
+    let nextIndex: number;
+
+    if (isShuffleEnabled) {
+      // Shuffle mode: get random track
+      nextIndex = getRandomTrackIndex();
+      setShuffleHistory(prev => [...prev, currentTrackIndex]);
+    } else {
+      // Normal mode: go to next track
+      nextIndex = (currentTrackIndex + 1) % playlist.length;
+      
+      // If we've reached the end and repeat is off, stop
+      if (nextIndex === 0 && repeatMode === 'off') {
+        // We've reached the end of playlist with no repeat
+        setIsPlaying(false);
+        if (sound) {
+          await sound.pauseAsync();
+        }
+        return;
+      }
+    }
+
     setCurrentTrackIndex(nextIndex);
     await loadAndPlayAudio(nextIndex);
   };
 
   const previousTrack = async () => {
-    const prevIndex = currentTrackIndex === 0 ? playlist.length - 1 : currentTrackIndex - 1;
+    let prevIndex: number;
+
+    if (isShuffleEnabled && shuffleHistory.length > 0) {
+      // Shuffle mode: go back to previous track from history
+      const history = [...shuffleHistory];
+      prevIndex = history.pop() || 0;
+      setShuffleHistory(history);
+    } else {
+      // Normal mode: go to previous track
+      prevIndex = currentTrackIndex === 0 ? playlist.length - 1 : currentTrackIndex - 1;
+    }
+
     setCurrentTrackIndex(prevIndex);
     await loadAndPlayAudio(prevIndex);
+  };
+
+  const toggleShuffle = () => {
+    setIsShuffleEnabled(!isShuffleEnabled);
+    // Clear shuffle history when toggling
+    if (!isShuffleEnabled) {
+      setShuffleHistory([]);
+    }
+  };
+
+  const toggleRepeat = () => {
+    const modes: RepeatMode[] = ['off', 'all', 'one'];
+    const currentIndex = modes.indexOf(repeatMode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    setRepeatMode(modes[nextIndex] as RepeatMode);
+  };
+
+  const getRepeatIcon = () => {
+    switch (repeatMode) {
+      case 'one':
+        return 'repeat-outline'; // Could also use a "1" overlay
+      case 'all':
+        return 'repeat';
+      default:
+        return 'repeat-outline';
+    }
+  };
+
+  const getRepeatColor = () => {
+    return repeatMode !== 'off' ? '#1DB954' : '#fff';
   };
 
   const handleBack = () => {
@@ -332,12 +427,27 @@ export default function MusicPlayerScreen() {
 
       {/* Bottom Controls */}
       <View style={styles.bottomControls}>
-        <TouchableOpacity>
-          <Ionicons name="shuffle" size={24} color="#fff" />
+        <TouchableOpacity onPress={toggleShuffle}>
+          <Ionicons 
+            name="shuffle" 
+            size={24} 
+            color={isShuffleEnabled ? '#1DB954' : '#fff'} 
+          />
         </TouchableOpacity>
         
-        <TouchableOpacity>
-          <Ionicons name="repeat" size={24} color="#fff" />
+        <TouchableOpacity onPress={toggleRepeat}>
+          <View style={styles.repeatContainer}>
+            <Ionicons 
+              name={getRepeatIcon()} 
+              size={24} 
+              color={getRepeatColor()} 
+            />
+            {repeatMode === 'one' && (
+              <View style={styles.repeatOneIndicator}>
+                <Text style={styles.repeatOneText}>1</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -458,6 +568,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
     paddingHorizontal: 60,
+  },
+  repeatContainer: {
+    position: 'relative',
+  },
+  repeatOneIndicator: {
+    position: 'absolute',
+    top: -5,
+    right: -8,
+    backgroundColor: '#1DB954',
+    borderRadius: 8,
+    width: 14,
+    height: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  repeatOneText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   lyricsSection: {
     alignItems: 'center',
