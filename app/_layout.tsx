@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { SpotifyProvider } from '../context/SpotifyContext';
+import { FavoritesProvider } from '../context/FavoritesContext';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
 // Splash Screen Component
@@ -58,6 +59,7 @@ const SplashScreen = () => {
   );
 };
 
+// RESTORED: Auth logic for demo
 const InitialLayout = () => {
   const { session, loading } = useAuth();
   const segments = useSegments();
@@ -90,10 +92,13 @@ const InitialLayout = () => {
 };
 
 export default function RootLayout() {
+  // RESTORED: Full auth + favorites system for demo
   return (
     <AuthProvider>
       <SpotifyProvider>
-        <InitialLayout />
+        <FavoritesProvider>
+          <InitialLayout />
+        </FavoritesProvider>
       </SpotifyProvider>
     </AuthProvider>
   );
