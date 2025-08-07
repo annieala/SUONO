@@ -12,7 +12,7 @@ import {
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useFavorites } from '../../context/FavoritesContext';
 
 const { width } = Dimensions.get('window');
@@ -28,13 +28,19 @@ interface Track {
 type RepeatMode = 'off' | 'all' | 'one';
 
 export default function MusicPlayerScreen() {
+  // Get route parameters
+  const { trackIndex: paramTrackIndex } = useLocalSearchParams();
+  
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
+    // Initialize with route parameter or default to 0
+    return paramTrackIndex ? parseInt(paramTrackIndex as string, 10) : 0;
+  });
   
   // New state for shuffle and repeat
   const [isShuffleEnabled, setIsShuffleEnabled] = useState(false);
@@ -78,6 +84,13 @@ export default function MusicPlayerScreen() {
       setOriginalPlaylist([...playlist]);
     }
   }, []);
+
+  // Auto-load track when component mounts or trackIndex changes
+  useEffect(() => {
+    if (currentTrackIndex >= 0 && currentTrackIndex < playlist.length) {
+      loadAndPlayAudio(currentTrackIndex);
+    }
+  }, []); // Only run on mount
 
   // Safety check
   if (!currentTrack) {
