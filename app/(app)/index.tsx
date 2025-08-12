@@ -165,7 +165,7 @@ export default function HomeScreen() {
           </Text>
           {isAuthorized && (
             <View style={styles.appleMusicBadge}>
-              <Ionicons name="musical-notes" size={12} color="#FA2D48" />
+              <Ionicons name="musical-notes" size={12} color="#0A0E26" />
               <Text style={styles.appleMusicText}>Apple Music</Text>
             </View>
           )}
@@ -293,10 +293,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FA2D48',
+    borderColor: '#0A0E26',
   },
   appleMusicText: {
-    color: '#FA2D48',
+    color: '#0A0E26',
     fontSize: 10,
     fontWeight: '600',
     marginLeft: 4,
