@@ -69,7 +69,7 @@ export default function LoginScreen() {
               <Text style={styles.inputLabel}>Email</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Please enter your email ↗"
+                placeholder="Please enter your email ♩"
                 placeholderTextColor="#8B8B8B"
                 value={email}
                 onChangeText={setEmail}
@@ -84,7 +84,7 @@ export default function LoginScreen() {
               <Text style={styles.inputLabel}>Password</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Please enter your password ↗"
+                placeholder="Please enter your password ♬"
                 placeholderTextColor="#8B8B8B"
                 value={password}
                 onChangeText={setPassword}
@@ -143,7 +143,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16213e', // Dark blue background from the design
+    backgroundColor: '#0A0E26', // Dark blue background from the design
   },
   keyboardView: {
     flex: 1,
@@ -166,13 +166,13 @@ const styles = StyleSheet.create({
   },
   wave: {
     width: 3,
-    backgroundColor: '#7c3aed', // Purple color for waveform
+    backgroundColor: '#7416F9', // Purple color for waveform
     borderRadius: 1.5,
   },
   logoText: {
     fontSize: 32,
     fontWeight: '600',
-    color: '#ffffff',
+    color: '#F9E1CF',
     letterSpacing: 1,
   },
   formContainer: {
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    color: '#ffffff',
+    color: '#F9E1CF',
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#ffffff',
+    color: '#F9E1CF',
   },
   errorContainer: {
     marginBottom: 20,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   signInButton: {
-    backgroundColor: '#7c3aed', // Purple button
+    backgroundColor: '#7416F9', // Purple button
     borderRadius: 25,
     paddingVertical: 16,
     marginBottom: 20,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   signInButtonText: {
-    color: '#ffffff',
+    color: '#F9E1CF',
     fontSize: 18,
     fontWeight: '600',
   },
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   forgotPasswordText: {
-    color: '#ffffff',
+    color: '#F9E1CF',
     fontSize: 16,
     textDecorationLine: 'underline',
   },
