@@ -3,33 +3,69 @@
     "name": "SUONO",
     "slug": "SUONO",
     "version": "1.0.0",
-    "scheme": "my-cool-app",
+    "scheme": "SUONO",
     "orientation": "portrait",
     "icon": "./assets/suono-loading-image.jpg",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "plugins": [["expo-router"
+    "plugins": [
+      [
+        "expo-router"
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow SUONO to access your microphone for music features."
+        }
       ]
-    ]
-     
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6fe731c8-7766-484a-a93f-0cd8de3962ea"
+      }
     },
+    "owner": "annie.ala",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
+      "package": "com.annie.ala.SUONO",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.annie.ala.SUONO",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppleMusicUsageDescription": "SUONO uses Apple Music to search and preview millions of songs.",
+        "NSMicrophoneUsageDescription": "Allow SUONO to access your microphone for music features.",
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "AVAudioSessionCategory": "AVAudioSessionCategoryPlayback",
+        "AVAudioSessionCategoryOptions": [
+          "AVAudioSessionCategoryOptionMixWithOthers"
+        ]
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
   }
-
+}

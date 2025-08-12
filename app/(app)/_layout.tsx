@@ -16,6 +16,8 @@ export default function AppLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="player" />
       <Stack.Screen name="favorites" />
+      <Stack.Screen name="monday-mood" />
+      <Stack.Screen name="gym"/>
     </Stack>
   );
 }

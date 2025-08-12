@@ -1,5 +1,5 @@
 // File: app/(app)/index.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -9,19 +9,27 @@ import {
   Image, 
   TouchableOpacity,
   SafeAreaView,
-  TextInput
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+// Import Apple Music context
+import { useAppleMusic } from '../../context/AppleMusicContext';
+
+// Import Enhanced Search - simplified local-only version
+import { EnhancedSearch } from '../../components/EnhancedSearch';
+
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
+  
+  // Use Apple Music context
+  const { isAuthorized } = useAppleMusic();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Get the user's first name for greeting - try multiple sources
+  // Get the user's first name for greeting
   const firstName = user?.user_metadata?.first_name || 
                    user?.user_metadata?.firstName || 
                    user?.email?.split('@')[0] || 
@@ -44,29 +52,15 @@ export default function HomeScreen() {
     }
   };
 
-  // Define interfaces for better type safety
-  interface PlaylistItem {
-    id: number;
-    name: string;
-    cover: any;
-  }
-
-  interface RecentlyPlayedItem {
-    id: number;
-    title: string;
-    artist: string;
-    cover: any;
-    trackIndex?: number; // Add track index to map to player playlist
-  }
-
-  interface SearchableItem {
-    id: number;
-    title: string;
-    artist?: string; // Optional for playlists
-    cover: any;
-    type: 'Playlist' | 'Album';
-    trackIndex?: number; // Add track index for direct player navigation
-  }
+  // Local tracks data for search
+  const localTracks = [
+    { id: '1', title: 'Daisies', artist: 'Justin Bieber', cover: require('../../assets/swag.jpg'), trackIndex: 0, type: 'local' as const },
+    { id: '2', title: 'The Dress', artist: 'Dijon', cover: require('../../assets/dijon.jpg'), trackIndex: 1, type: 'local' as const },
+    { id: '3', title: 'Mutt', artist: 'Leon Thomas', cover: require('../../assets/mutt.jpg'), trackIndex: 2, type: 'local' as const },
+    { id: '4', title: 'Hurry Up', artist: 'Beyoncé', cover: require('../../assets/lovetide.jpg'), trackIndex: 3, type: 'local' as const },
+    { id: '5', title: 'Fool', artist: 'Childish Gambino', cover: require('../../assets/childish-gambino.jpg'), trackIndex: 4, type: 'local' as const },
+    { id: '6', title: 'Only Wanna Dance With You', artist: 'Annie', cover: require('../../assets/self-talk.jpg'), trackIndex: 5, type: 'local' as const },
+  ];
 
   // Mock data for friends with local assets
   const friends = [
@@ -77,73 +71,86 @@ export default function HomeScreen() {
   ];
 
   // Enhanced recently played with artist information and track mapping
-  const recentlyPlayed: RecentlyPlayedItem[] = [
+  const recentlyPlayed = [
     { id: 1, title: 'Daisies', artist: 'Justin Bieber', cover: require('../../assets/swag.jpg'), trackIndex: 0 },
     { id: 2, title: 'The Dress', artist: 'Dijon', cover: require('../../assets/dijon.jpg'), trackIndex: 1 },
     { id: 3, title: 'Mutt', artist: 'Leon Thomas', cover: require('../../assets/mutt.jpg'), trackIndex: 2 },
   ];
 
   // Mock data for playlists with local assets
-  const playlists: PlaylistItem[] = [
+  const playlists = [
     { id: 1, name: '☆ Favourites ☆', cover: require('../../assets/fool.jpg') },
     { id: 2, name: '⋆｡˚ ☁︎ ˚｡ Monday Mood ⋆｡˚☽˚｡⋆ ', cover: require('../../assets/lovetide.jpg') },
     { id: 3, name: '❚█══█❚ Gym ❚█══█❚', cover: require('../../assets/640x640.jpg') },
   ];
 
-  // Search functionality with proper typing and track mapping
-  const allSearchableItems = useMemo((): SearchableItem[] => {
-    const mappedPlaylists: SearchableItem[] = playlists.map(p => ({ 
-      id: p.id,
-      title: p.name,
-      cover: p.cover,
-      type: 'Playlist' as const
-    }));
-    const mappedRecentlyPlayed: SearchableItem[] = recentlyPlayed.map(r => ({ 
-      id: r.id,
-      title: r.title,
-      artist: r.artist,
-      cover: r.cover,
-      type: 'Album' as const,
-      trackIndex: r.trackIndex // Include track index for navigation
-    }));
-    return [...mappedPlaylists, ...mappedRecentlyPlayed];
-  }, []);
-
-  const filteredData = useMemo(() => {
-    if (!searchQuery) {
-      return [];
+  // Handle friend press - navigate to player with specific track
+  const handleFriendPress = (friendId: number) => {
+    let trackIndex: number;
+    
+    switch (friendId) {
+      case 1: // Sarah - plays hurry-up.mp3 (track index 3)
+        trackIndex = 3;
+        break;
+      case 2: // Mike - plays fool.mp3 (track index 4)
+        trackIndex = 4;
+        break;
+      default:
+        // For other friends, just go to default player
+        router.push('/(app)/player');
+        return;
     }
-    return allSearchableItems.filter(item => 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.artist && item.artist.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [searchQuery, allSearchableItems]);
+    
+    // Navigate to player with specific track index
+    router.push({
+      pathname: '/(app)/player',
+      params: { trackIndex: trackIndex.toString() }
+    });
+  };
 
-  const handleSearchResultPress = (item: SearchableItem) => {
-    if (item.type === 'Playlist' && item.id === 1) {
-      // Navigate to favorites
-      router.push('/(app)/favorites');
-    } else if (item.type === 'Album' && item.trackIndex !== undefined) {
-      // Navigate to player with specific track index
+  // Handle search result selection - Updated for proper routing
+  const handleTrackSelect = (track: any) => {
+    console.log('Track selected:', track.title, 'Type:', track.type);
+    
+    if (track.type === 'local' && track.trackIndex !== undefined) {
+      // Navigate to player with specific local track index
+      console.log('Navigating to local track, index:', track.trackIndex);
       router.push({
         pathname: '/(app)/player',
-        params: { trackIndex: item.trackIndex.toString() }
+        params: { trackIndex: track.trackIndex.toString() }
+      });
+    } else if (track.type === 'apple-music') {
+      // Navigate to player with Apple Music track data
+      console.log('Navigating to Apple Music track:', track.title);
+      const appleMusicTrackData = {
+        id: track.id,
+        title: track.title,
+        artist: track.artist,
+        album: track.album || '',
+        previewUrl: track.previewUrl,
+        artwork: track.artwork,
+      };
+      
+      router.push({
+        pathname: '/(app)/player',
+        params: { 
+          appleMusicTrack: JSON.stringify(appleMusicTrackData)
+        }
       });
     } else {
-      // Default player navigation
+      // Fallback - go to default player
+      console.log('Fallback routing to default player');
       router.push('/(app)/player');
     }
   };
 
-  const handleRecentlyPlayedPress = (item: RecentlyPlayedItem) => {
+  const handleRecentlyPlayedPress = (item: any) => {
     if (item.trackIndex !== undefined) {
-      // Navigate to player with specific track
       router.push({
         pathname: '/(app)/player',
         params: { trackIndex: item.trackIndex.toString() }
       });
     } else {
-      // Default navigation
       router.push('/(app)/player');
     }
   };
@@ -151,67 +158,29 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header with greeting */}
+        {/* Header with greeting and Apple Music status */}
         <View style={styles.header}>
           <Text style={styles.greeting}>
             {getGreeting()} {firstName} ✨
           </Text>
-          
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          {isAuthorized && (
+            <View style={styles.appleMusicBadge}>
+              <Ionicons name="musical-notes" size={12} color="#0A0E26" />
+              <Text style={styles.appleMusicText}>Apple Music</Text>
+            </View>
+          )}
         </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search songs, albums, artists..."
-              placeholderTextColor="#888"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={20} color="#888" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+        {/* Enhanced Search Component */}
+        <EnhancedSearch
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          localTracks={localTracks}
+          onTrackSelect={handleTrackSelect}
+        />
 
-        {/* Conditional Content */}
-        {searchQuery.length > 0 ? (
-          // Search Results View
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Search Results</Text>
-            {filteredData.length > 0 ? (
-              <View style={styles.playlistsContainer}>
-                {filteredData.map((item) => (
-                  <TouchableOpacity 
-                    key={`${item.type}-${item.id}`} 
-                    style={styles.playlistItem}
-                    onPress={() => handleSearchResultPress(item)}
-                  >
-                    <Image source={item.cover} style={styles.playlistCover} />
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.playlistName}>{item.title}</Text>
-                      <Text style={styles.itemType}>{item.artist || item.type}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ) : (
-              <View style={styles.noResultsContainer}>
-                <Ionicons name="search" size={48} color="#666" />
-                <Text style={styles.noResultsText}>No results found for "{searchQuery}"</Text>
-                <Text style={styles.noResultsSubtext}>Try searching for a different song, artist, or playlist</Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          // Default View
+        {/* Show default content when not searching */}
+        {searchQuery.length === 0 && (
           <>
             {/* Friends listening section */}
             <View style={styles.section}>
@@ -222,7 +191,11 @@ export default function HomeScreen() {
                 style={styles.friendsContainer}
               >
                 {friends.map((friend) => (
-                  <TouchableOpacity key={friend.id} style={styles.friendItem}>
+                  <TouchableOpacity 
+                    key={friend.id} 
+                    style={styles.friendItem}
+                    onPress={() => handleFriendPress(friend.id)}
+                  >
                     <Image source={friend.avatar} style={styles.friendAvatar} />
                   </TouchableOpacity>
                 ))}
@@ -237,7 +210,7 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 style={styles.recentlyPlayedContainer}
               >
-                {recentlyPlayed.map((item, index) => (
+                {recentlyPlayed.map((item) => (
                   <TouchableOpacity 
                     key={item.id} 
                     style={styles.recentlyPlayedItem}
@@ -260,11 +233,14 @@ export default function HomeScreen() {
                     key={playlist.id} 
                     style={styles.playlistItem}
                     onPress={() => {
-                      // Navigate to favorites if it's the favorites playlist
+                      // Navigate to specific playlist screens
                       if (playlist.id === 1) {
                         router.push('/(app)/favorites');
+                      } else if (playlist.id === 2) {
+                        router.push('/(app)/monday-mood');
+                      } else if (playlist.id === 3) {
+                        router.push('/(app)/gym');
                       }
-                      // Add other playlist navigation here later
                     }}
                   >
                     <Image source={playlist.cover} style={styles.playlistCover} />
@@ -275,6 +251,12 @@ export default function HomeScreen() {
             </View>
           </>
         )}
+
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -297,70 +279,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   greeting: {
-    fontSize: 30,
+    marginTop: 10,
+    fontSize: 33,
     fontWeight: '400',
     color: '#F9E1CF',
+    flex: 1,
   },
-  logoutButton: {
-    backgroundColor: '#0A0E26',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  logoutText: {
-    color: '#F9E1CF',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  searchSection: {
-    marginBottom: 30,
-  },
-  searchContainer: {
+  appleMusicBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16213e',
-    borderRadius: 12,
-    paddingHorizontal: 15,
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    marginBottom: -10,
-    height: 30,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#0A0E26',
   },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 16,
-    paddingVertical: 8,
-  },
-  clearButton: {
-    marginLeft: 10,
-  },
-  noResultsContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  noResultsText: {
-    color: '#F9E1CF',
-    textAlign: 'center',
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  noResultsSubtext: {
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 8,
-    fontSize: 14,
-  },
-  itemDetails: {
-    flex: 1,
-  },
-  itemType: {
-    color: '#aaa',
-    fontSize: 12,
-    marginTop: 2,
+  appleMusicText: {
+    color: '#0A0E26',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   section: {
     marginBottom: 40,
@@ -369,7 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#F9E1CF',
-    marginBottom: 25,
+    marginBottom: 20,
   },
   friendsContainer: {
     flexDirection: 'row',
@@ -430,5 +369,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     flex: 1,
+  },
+  logoutContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 60,
+    marginBottom: 30,
+  },
+  logoutButton: {
+    backgroundColor: '#0A0E26',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  logoutText: {
+    color: '#F9E1CF',
+    fontSize: 10,
+    fontWeight: '600',
   },
 });
