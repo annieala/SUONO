@@ -5,6 +5,8 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { SpotifyProvider } from '../context/SpotifyContext';
 import { FavoritesProvider } from '../context/FavoritesContext';
+import { PlaylistsProvider } from '../context/PlaylistsContext';
+import { AppleMusicProvider } from '../context/AppleMusicContext'; // ADD THIS
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
 // Splash Screen Component
@@ -59,7 +61,7 @@ const SplashScreen = () => {
   );
 };
 
-// RESTORED: Auth logic for demo
+// Auth logic for demo
 const InitialLayout = () => {
   const { session, loading } = useAuth();
   const segments = useSegments();
@@ -92,12 +94,15 @@ const InitialLayout = () => {
 };
 
 export default function RootLayout() {
-  // RESTORED: Full auth + favorites system for demo
   return (
     <AuthProvider>
       <SpotifyProvider>
         <FavoritesProvider>
-          <InitialLayout />
+          <PlaylistsProvider>
+            <AppleMusicProvider developerToken={process.env.EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}>
+              <InitialLayout />
+            </AppleMusicProvider>
+          </PlaylistsProvider>
         </FavoritesProvider>
       </SpotifyProvider>
     </AuthProvider>
