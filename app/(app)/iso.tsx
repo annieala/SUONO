@@ -121,7 +121,7 @@ export default function ISOScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="chevron-down" size={24} color="#F9E1CF" />
+          <Ionicons name="chevron-down" size={15} color="#F9E1CF" />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>ISO MODE</Text>
@@ -130,7 +130,7 @@ export default function ISOScreen() {
           </Text>
         </View>
         <TouchableOpacity style={styles.optionsButton}>
-          <Ionicons name="ellipsis-vertical" size={24} color="#F9E1CF" />
+          <Ionicons name="ellipsis-vertical" size={15} color="#F9E1CF" />
         </TouchableOpacity>
       </View>
 
@@ -314,7 +314,7 @@ export default function ISOScreen() {
         <View style={styles.bottomControls}>
           <TouchableOpacity style={styles.lyricsButton}>
             <Text style={styles.lyricsText}>LYRICS</Text>
-            <Ionicons name="chevron-down" size={16} color="#F9E1CF" style={styles.chevronIcon} />
+            <Ionicons name="chevron-down" size={15} color="#F9E1CF" style={styles.chevronIcon} />
           </TouchableOpacity>
         </View>
       </View>
