@@ -1,5 +1,5 @@
 // File: app/(app)/iso.tsx
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,46 +7,106 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useColor } from '../../context/ColorContext';
+import { useAudio } from '../../context/AudioContext';
 
 const { width } = Dimensions.get('window');
 const GRID_ITEM_SIZE = (width - 82) / 2; // 2 items per row with margins and 2px gap
 
 export default function ISOScreen() {
   const { backgroundColor, isLoaded } = useColor();
+  const {
+    isPlaying,
+    currentPosition,
+    duration,
+    currentISOTrack,
+    enterISOMode,
+    exitISOMode,
+    playISOTrack,
+    pauseAudio,
+    playAudio,
+    seekTo,
+  } = useAudio();
+
+  // Scrubbing state
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const progressBarRef = useRef<View>(null);
+
+  // Enter ISO mode when screen loads
+  useEffect(() => {
+    enterISOMode();
+  }, []);
+
+  const handleProgressBarPress = (evt: any) => {
+    if (progressBarRef.current && duration > 0) {
+      const { locationX } = evt.nativeEvent;
+      
+      progressBarRef.current.measure((x, y, width, height) => {
+        const percentage = Math.max(0, Math.min(1, locationX / width));
+        const newPosition = percentage * duration;
+        seekTo(newPosition);
+      });
+    }
+  };
 
   const handleBack = () => {
+    // Exit ISO mode and go back
+    exitISOMode();
     router.back();
   };
 
-  // Grid items configuration
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      pauseAudio();
+    } else {
+      playAudio();
+    }
+  };
+
+  // Format time in mm:ss
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate progress percentage
+  const progressPercentage = duration > 0 ? (currentPosition / duration) * 100 : 0;
+
+  // Grid items configuration with audio functionality
   const gridItems = [
     {
       id: 1,
-      icon: 'disc-outline', // Drum icon
+      icon: 'disc-outline',
       label: 'beat',
-      onPress: () => console.log('Beat pressed'),
+      trackName: 'beat',
+      onPress: () => playISOTrack('beat'),
     },
     {
       id: 2,
-      icon: 'musical-notes-outline', // Bass guitar icon
+      icon: 'musical-notes-outline',
       label: 'bass',
-      onPress: () => console.log('Bass pressed'),
+      trackName: 'bass',
+      onPress: () => playISOTrack('bass'),
     },
     {
       id: 3,
-      icon: 'pulse-outline', // Audio waveform icon
+      icon: 'pulse-outline',
       label: 'bed',
-      onPress: () => console.log('Bed pressed'),
+      trackName: 'bed',
+      onPress: () => playISOTrack('bed'),
     },
     {
       id: 4,
-      icon: 'mic-outline', // Microphone icon
+      icon: 'mic-outline',
       label: 'vox',
-      onPress: () => console.log('Vox pressed'),
+      trackName: 'vox',
+      onPress: () => playISOTrack('vox'),
     },
   ];
 
@@ -64,8 +124,10 @@ export default function ISOScreen() {
           <Ionicons name="chevron-down" size={24} color="#F9E1CF" />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>PLAYING FROM ALBUM</Text>
-          <Text style={styles.headerSubtitle}>Daisies</Text>
+          <Text style={styles.headerTitle}>ISO MODE</Text>
+          <Text style={styles.headerSubtitle}>
+            {currentISOTrack ? currentISOTrack.toUpperCase() : 'Select Track'}
+          </Text>
         </View>
         <TouchableOpacity style={styles.optionsButton}>
           <Ionicons name="ellipsis-vertical" size={24} color="#F9E1CF" />
@@ -77,7 +139,10 @@ export default function ISOScreen() {
         <View style={styles.grid}>
           <View style={styles.gridRow}>
             <TouchableOpacity
-              style={styles.gridItem}
+              style={[
+                styles.gridItem,
+                currentISOTrack === 'beat' && styles.activeGridItem
+              ]}
               onPress={gridItems[0].onPress}
               activeOpacity={0.7}
             >
@@ -85,16 +150,24 @@ export default function ISOScreen() {
                 <Ionicons 
                   name={gridItems[0].icon as any} 
                   size={32} 
-                  color="#F9E1CF" 
+                  color={currentISOTrack === 'beat' ? '#000' : '#F9E1CF'} 
                 />
               </View>
-              <Text style={styles.gridItemLabel}>{gridItems[0].label}</Text>
+              <Text style={[
+                styles.gridItemLabel,
+                currentISOTrack === 'beat' && styles.activeGridItemLabel
+              ]}>
+                {gridItems[0].label}
+              </Text>
             </TouchableOpacity>
             
             <View style={styles.spacer} />
             
             <TouchableOpacity
-              style={styles.gridItem}
+              style={[
+                styles.gridItem,
+                currentISOTrack === 'bass' && styles.activeGridItem
+              ]}
               onPress={gridItems[1].onPress}
               activeOpacity={0.7}
             >
@@ -102,10 +175,15 @@ export default function ISOScreen() {
                 <Ionicons 
                   name={gridItems[1].icon as any} 
                   size={32} 
-                  color="#F9E1CF" 
+                  color={currentISOTrack === 'bass' ? '#000' : '#F9E1CF'} 
                 />
               </View>
-              <Text style={styles.gridItemLabel}>{gridItems[1].label}</Text>
+              <Text style={[
+                styles.gridItemLabel,
+                currentISOTrack === 'bass' && styles.activeGridItemLabel
+              ]}>
+                {gridItems[1].label}
+              </Text>
             </TouchableOpacity>
           </View>
           
@@ -113,7 +191,10 @@ export default function ISOScreen() {
           
           <View style={styles.gridRow}>
             <TouchableOpacity
-              style={styles.gridItem}
+              style={[
+                styles.gridItem,
+                currentISOTrack === 'bed' && styles.activeGridItem
+              ]}
               onPress={gridItems[2].onPress}
               activeOpacity={0.7}
             >
@@ -121,16 +202,24 @@ export default function ISOScreen() {
                 <Ionicons 
                   name={gridItems[2].icon as any} 
                   size={32} 
-                  color="#F9E1CF" 
+                  color={currentISOTrack === 'bed' ? '#000' : '#F9E1CF'} 
                 />
               </View>
-              <Text style={styles.gridItemLabel}>{gridItems[2].label}</Text>
+              <Text style={[
+                styles.gridItemLabel,
+                currentISOTrack === 'bed' && styles.activeGridItemLabel
+              ]}>
+                {gridItems[2].label}
+              </Text>
             </TouchableOpacity>
             
             <View style={styles.spacer} />
             
             <TouchableOpacity
-              style={styles.gridItem}
+              style={[
+                styles.gridItem,
+                currentISOTrack === 'vox' && styles.activeGridItem
+              ]}
               onPress={gridItems[3].onPress}
               activeOpacity={0.7}
             >
@@ -138,10 +227,15 @@ export default function ISOScreen() {
                 <Ionicons 
                   name={gridItems[3].icon as any} 
                   size={32} 
-                  color="#F9E1CF" 
+                  color={currentISOTrack === 'vox' ? '#000' : '#F9E1CF'} 
                 />
               </View>
-              <Text style={styles.gridItemLabel}>{gridItems[3].label}</Text>
+              <Text style={[
+                styles.gridItemLabel,
+                currentISOTrack === 'vox' && styles.activeGridItemLabel
+              ]}>
+                {gridItems[3].label}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -149,7 +243,9 @@ export default function ISOScreen() {
 
       {/* Track Info */}
       <View style={styles.trackInfo}>
-        <Text style={styles.trackTitle}>Daisies</Text>
+        <Text style={styles.trackTitle}>
+          {currentISOTrack ? `${currentISOTrack.toUpperCase()} - Daisies` : 'Daisies'}
+        </Text>
         <Text style={styles.trackArtist}>Justin Bieber</Text>
         <TouchableOpacity style={styles.heartIcon}>
           <Ionicons name="heart-outline" size={24} color="#F9E1CF" />
@@ -158,12 +254,31 @@ export default function ISOScreen() {
 
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={styles.progressFill} />
-        </View>
+        <TouchableWithoutFeedback onPress={handleProgressBarPress}>
+          <View 
+            style={styles.progressBarContainer}
+            ref={progressBarRef}
+          >
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${Math.min(progressPercentage, 100)}%` }
+                ]} 
+              />
+              {/* Scrub handle - always visible but subtle */}
+              <View 
+                style={[
+                  styles.scrubHandle,
+                  { left: `${Math.min(progressPercentage, 100)}%` }
+                ]}
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
         <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>1:20</Text>
-          <Text style={styles.timeText}>3:15</Text>
+          <Text style={styles.timeText}>{formatTime(currentPosition)}</Text>
+          <Text style={styles.timeText}>{formatTime(duration)}</Text>
         </View>
       </View>
 
@@ -177,8 +292,12 @@ export default function ISOScreen() {
           <Ionicons name="play-skip-back" size={30} color="#F9E1CF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.playButton}>
-          <Ionicons name="pause" size={20} color="#000" />
+        <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+          <Ionicons 
+            name={isPlaying ? "pause" : "play"} 
+            size={20} 
+            color="#000" 
+          />
         </TouchableOpacity>
 
         <TouchableOpacity>
@@ -196,10 +315,6 @@ export default function ISOScreen() {
           <TouchableOpacity style={styles.lyricsButton}>
             <Text style={styles.lyricsText}>LYRICS</Text>
             <Ionicons name="chevron-down" size={16} color="#F9E1CF" style={styles.chevronIcon} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.isoButton}>
-            <Text style={styles.isoButtonText}>[[ ISO ]]</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -267,6 +382,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(249, 225, 207, 0.2)',
   },
+  activeGridItem: {
+    backgroundColor: '#F9E1CF',
+    borderColor: '#F9E1CF',
+  },
   iconContainer: {
     marginBottom: 8,
   },
@@ -275,6 +394,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  activeGridItemLabel: {
+    color: '#000',
   },
   trackInfo: {
     alignItems: 'flex-start',
@@ -304,18 +426,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
+  progressBarContainer: {
+    width: '100%',
+    paddingVertical: 15, // Larger touch area
+    marginBottom: 10,
+  },
   progressBar: {
     width: '100%',
     height: 4,
     backgroundColor: '#333',
     borderRadius: 2,
-    marginBottom: 10,
+    position: 'relative',
   },
   progressFill: {
-    width: '40%',
     height: '100%',
     backgroundColor: '#F9E1CF',
     borderRadius: 2,
+  },
+  scrubHandle: {
+    position: 'absolute',
+    top: -4,
+    width: 12,
+    height: 12,
+    backgroundColor: '#F9E1CF',
+    borderRadius: 6,
+    marginLeft: -6, // Center the handle
+    opacity: 0.8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   timeContainer: {
     flexDirection: 'row',
@@ -346,22 +490,9 @@ const styles = StyleSheet.create({
   },
   bottomControls: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-  },
-  isoButton: {
-    backgroundColor: 'rgba(249, 225, 207, 0.2)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(249, 225, 207, 0.4)',
-  },
-  isoButtonText: {
-    color: '#F9E1CF',
-    fontSize: 12,
-    fontWeight: '600',
   },
   lyricsButton: {
     flexDirection: 'row',

@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -8,
-    backgroundColor: '#1DB954',
+    backgroundColor: '#F9E1CF',
     borderRadius: 8,
     width: 14,
     height: 14,
