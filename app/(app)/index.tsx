@@ -17,6 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 // Import Apple Music context
 import { useAppleMusic } from '../../context/AppleMusicContext';
 
+// Import Color context
+import { useColor } from '../../context/ColorContext';
+
 // Import Enhanced Search - simplified local-only version
 import { EnhancedSearch } from '../../components/EnhancedSearch';
 
@@ -25,6 +28,9 @@ export default function HomeScreen() {
   
   // Use Apple Music context
   const { isAuthorized } = useAppleMusic();
+  
+  // Use Color context
+  const { backgroundColor } = useColor();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,14 +58,15 @@ export default function HomeScreen() {
     }
   };
 
-  // Local tracks data for search
+  const handleColorPickerPress = () => {
+    router.push('/(app)/color-picker');
+  };
+
+  // Local tracks data for search - Only tracks that exist in player
   const localTracks = [
     { id: '1', title: 'Daisies', artist: 'Justin Bieber', cover: require('../../assets/swag.jpg'), trackIndex: 0, type: 'local' as const },
     { id: '2', title: 'The Dress', artist: 'Dijon', cover: require('../../assets/dijon.jpg'), trackIndex: 1, type: 'local' as const },
     { id: '3', title: 'Mutt', artist: 'Leon Thomas', cover: require('../../assets/mutt.jpg'), trackIndex: 2, type: 'local' as const },
-    { id: '4', title: 'Hurry Up', artist: 'Beyoncé', cover: require('../../assets/lovetide.jpg'), trackIndex: 3, type: 'local' as const },
-    { id: '5', title: 'Fool', artist: 'Childish Gambino', cover: require('../../assets/childish-gambino.jpg'), trackIndex: 4, type: 'local' as const },
-    { id: '6', title: 'Only Wanna Dance With You', artist: 'Annie', cover: require('../../assets/self-talk.jpg'), trackIndex: 5, type: 'local' as const },
   ];
 
   // Mock data for friends with local assets
@@ -70,7 +77,7 @@ export default function HomeScreen() {
     { id: 4, name: 'Alex', avatar: require('../../assets/childish-gambino.jpg') },
   ];
 
-  // Enhanced recently played with artist information and track mapping
+  // Enhanced recently played with artist information and track mapping - Only existing tracks
   const recentlyPlayed = [
     { id: 1, title: 'Daisies', artist: 'Justin Bieber', cover: require('../../assets/swag.jpg'), trackIndex: 0 },
     { id: 2, title: 'The Dress', artist: 'Dijon', cover: require('../../assets/dijon.jpg'), trackIndex: 1 },
@@ -89,16 +96,21 @@ export default function HomeScreen() {
     let trackIndex: number;
     
     switch (friendId) {
-      case 1: // Sarah - plays hurry-up.mp3 (track index 3)
-        trackIndex = 3;
+      case 1: // Sarah - plays "The Dress" (track index 1)
+        trackIndex = 1;
         break;
-      case 2: // Mike - plays fool.mp3 (track index 4)
-        trackIndex = 4;
+      case 2: // Mike - plays "Mutt" (track index 2)
+        trackIndex = 2;
+        break;
+      case 3: // Emma - plays "Daisies" (track index 0)
+        trackIndex = 0;
+        break;
+      case 4: // Alex - plays "The Dress" (track index 1)
+        trackIndex = 1;
         break;
       default:
-        // For other friends, just go to default player
-        router.push('/(app)/player');
-        return;
+        // Fallback to first track
+        trackIndex = 0;
     }
     
     // Navigate to player with specific track index
@@ -155,8 +167,39 @@ export default function HomeScreen() {
     }
   };
 
+  // Create dynamic styles based on background color
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: backgroundColor,
+    },
+    playlistItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: backgroundColor,
+      borderRadius: 12,
+      padding: 12,
+    },
+    logoutButton: {
+      backgroundColor: backgroundColor,
+      paddingHorizontal: 15,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    appleMusicBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F9E1CF',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: backgroundColor,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header with greeting and Apple Music status */}
         <View style={styles.header}>
@@ -164,7 +207,7 @@ export default function HomeScreen() {
             {getGreeting()} {firstName} ✨
           </Text>
           {isAuthorized && (
-            <View style={styles.appleMusicBadge}>
+            <View style={dynamicStyles.appleMusicBadge}>
               <Ionicons name="musical-notes" size={12} color="#0A0E26" />
               <Text style={styles.appleMusicText}>Apple Music</Text>
             </View>
@@ -231,7 +274,7 @@ export default function HomeScreen() {
                 {playlists.map((playlist) => (
                   <TouchableOpacity 
                     key={playlist.id} 
-                    style={styles.playlistItem}
+                    style={dynamicStyles.playlistItem}
                     onPress={() => {
                       // Navigate to specific playlist screens
                       if (playlist.id === 1) {
@@ -252,9 +295,14 @@ export default function HomeScreen() {
           </>
         )}
 
-        <View style={styles.logoutContainer}>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+        {/* Bottom buttons container */}
+        <View style={styles.bottomButtonsContainer}>
+          <TouchableOpacity onPress={handleLogout} style={dynamicStyles.logoutButton}>
             <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={handleColorPickerPress} style={styles.colorButton}>
+            <Ionicons name="color-palette" size={16} color="#F9E1CF" />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -263,10 +311,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0E26',
-  },
   scrollView: {
     flex: 1,
     paddingHorizontal: 20,
@@ -280,20 +324,10 @@ const styles = StyleSheet.create({
   },
   greeting: {
     marginTop: 10,
-    fontSize: 33,
+    fontSize: 30,
     fontWeight: '400',
     color: '#F9E1CF',
     flex: 1,
-  },
-  appleMusicBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#0A0E26',
   },
   appleMusicText: {
     color: '#0A0E26',
@@ -351,13 +385,6 @@ const styles = StyleSheet.create({
   playlistsContainer: {
     gap: 15,
   },
-  playlistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0A0E26',
-    borderRadius: 12,
-    padding: 12,
-  },
   playlistCover: {
     width: 50,
     height: 50,
@@ -370,21 +397,25 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     flex: 1,
   },
-  logoutContainer: {
+  bottomButtonsContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 60,
     marginBottom: 30,
-  },
-  logoutButton: {
-    backgroundColor: '#0A0E26',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
+    gap: 15,
   },
   logoutText: {
     color: '#F9E1CF',
     fontSize: 10,
     fontWeight: '600',
+  },
+  colorButton: {
+    backgroundColor: 'rgba(249, 225, 207, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(249, 225, 207, 0.3)',
   },
 });

@@ -3,10 +3,11 @@
 import React, { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { ColorProvider } from '../context/ColorContext'; // Import at the top
 import { SpotifyProvider } from '../context/SpotifyContext';
 import { FavoritesProvider } from '../context/FavoritesContext';
 import { PlaylistsProvider } from '../context/PlaylistsContext';
-import { AppleMusicProvider } from '../context/AppleMusicContext'; // ADD THIS
+import { AppleMusicProvider } from '../context/AppleMusicContext';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
 // Splash Screen Component
@@ -95,17 +96,19 @@ const InitialLayout = () => {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <SpotifyProvider>
-        <FavoritesProvider>
-          <PlaylistsProvider>
-            <AppleMusicProvider developerToken={process.env.EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}>
-              <InitialLayout />
-            </AppleMusicProvider>
-          </PlaylistsProvider>
-        </FavoritesProvider>
-      </SpotifyProvider>
-    </AuthProvider>
+    <ColorProvider>
+      <AuthProvider>
+        <SpotifyProvider>
+          <FavoritesProvider>
+            <PlaylistsProvider>
+              <AppleMusicProvider developerToken={process.env.EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN}>
+                <InitialLayout />
+              </AppleMusicProvider>
+            </PlaylistsProvider>
+          </FavoritesProvider>
+        </SpotifyProvider>
+      </AuthProvider>
+    </ColorProvider>
   );
 }
 
